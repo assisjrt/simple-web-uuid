@@ -1,9 +1,17 @@
 import platform
+from typing import Literal
 from uuid import uuid4
 
-from flask import Flask
+from flask import Flask, request
 
 app = Flask(__name__)
+
+data_store: dict[str, dict[str, str]] = {}
+
+
+@app.route("/health")
+def health() -> dict[str, str]:
+    return {"status": "ok"}
 
 
 @app.route("/")
@@ -13,6 +21,51 @@ def hello_world() -> dict[str, str]:
     return {"hostname": str(hostname), "uuid": str(uuid)}
 
 
-@app.route("/health")
-def health() -> dict[str, str]:
-    return {"status": "ok"}
+@app.route("/items", methods=["GET"])
+def get_items() -> dict[str, list[str]]:
+    return {"items": list(data_store.keys())}
+
+
+@app.route("/items/<item_id>", methods=["GET"])
+def get_item(item_id: str) -> tuple[dict[str, str], Literal[404]] | dict[str, str]:
+    if item_id not in data_store:
+        return {"error": "item not found"}, 404
+    return {"item": str(data_store[item_id])}
+
+
+@app.route("/items", methods=["POST"])
+def create_item() -> tuple[dict[str, str], Literal[201]]:
+    data = request.get_json() or {}
+    item_id = str(uuid4())
+
+    item = {
+        "id": item_id,
+        "name": data.get("name", ""),
+        "created_at": platform.node(),
+    }
+
+    data_store[item_id] = item
+    return {"message": "item created success", "item": str(item)}, 201
+
+
+@app.route("/items/<item_id>", methods=["PUT"])
+def update_item(item_id: str) -> tuple[dict[str, str], Literal[404]] | dict[str, str]:
+    if item_id not in data_store:
+        return {"error": "item not found"}, 404
+
+    data = request.get_json() or {}
+    item = data_store[item_id]
+
+    item["name"] = data.get("name", item["name"])
+    item["updated_at"] = platform.node()
+
+    return {"message": "item update success", "item": str(item)}
+
+
+@app.route("/items/<item_id>", methods=["DELETE"])
+def delete_item(item_id: str) -> tuple[dict[str, str], Literal[404]] | dict[str, str]:
+    if item_id not in data_store:
+        return {"error": "item not found"}, 404
+
+    deleted_item = data_store.pop(item_id)
+    return {"message": "item deleted success", "deleted_item": str(deleted_item)}
