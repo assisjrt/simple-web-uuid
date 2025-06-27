@@ -133,8 +133,8 @@ spec:
               scheme: HTTP
           resources:
             requests:
-              cpu: 167m
-              memory: 256Mi
+              cpu: 83m
+              memory: 128Mi
             limits:
-              cpu: 333m
-              memory: 512Mi
+              cpu: 83m
+              memory: 128Mi
