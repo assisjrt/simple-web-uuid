@@ -1,0 +1,109 @@
+[project]
+name = "simple-web-uuid"
+version = "0.1.0"
+description = ""
+authors = [{ name = "Jose Roberto Assis", email = "assisjrt@gmail.com" }]
+readme = "README.md"
+requires-python = ">=3.13,<4.0"
+dependencies = [
+    "flask (>=3.1.1,<4.0.0)",
+    "gunicorn (>=23.0.0,<24.0.0)",
+    "gevent (>=25.5.1,<26.0.0)",
+]
+
+[tool.mypy]
+files = []
+strict = true
+incremental = true
+pretty = true
+show_error_context = true
+show_column_numbers = true
+cache_dir = ".mypy_cache"
+exclude = [".venv", ".git", "__pycache__", ".mypy_cache", ".ruff_cache"]
+check_untyped_defs = true
+disallow_any_decorated = true
+disallow_any_generics = true
+disallow_any_unimported = true
+disallow_incomplete_defs = true
+disallow_subclassing_any = true
+disallow_untyped_calls = true
+disallow_untyped_decorators = true
+disallow_untyped_defs = true
+extra_checks = true
+strict_equality = true
+warn_redundant_casts = true
+warn_return_any = true
+warn_unreachable = true
+warn_unused_configs = true
+warn_unused_ignores = true
+
+[tool.poetry]
+package-mode = false
+
+[tool.pyright]
+typeCheckingMode = "off"
+
+[tool.ruff]
+target-version = "py313"
+indent-width = 4
+line-length = 88
+show-fixes = true
+output-format = "full"
+preview = false
+include = []
+exclude = [".venv", ".git", "__pycache__", ".mypy_cache", ".ruff_cache"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+
+[tool.ruff.lint]
+unfixable = []
+fixable = ["ALL"]
+
+ignore = [
+    "CPY",    # Ignore copyright header enforcement rules
+    "D",      # Ignore all pydocstyle rules (missing or improperly formatted docstrings)
+    "Q",      # Ignore flake8-quotes rules (single vs double quotes enforcement)
+    "COM812", # Ignore missing trailing comma in multiline collections
+    "ERA001", # Ignore commented-out code detection
+    "RET501", # Ignore unnecessary return statements (like `return None` at end of function)
+    "S603",   # Ignore security warning for `subprocess` without `shell=False` (bandit)
+    "W191",   # Ignore tabs used for indentation (in favor of spaces)
+]
+select = ["ALL"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.ruff.lint.per-file-ignores]
+
+[tool.ruff.lint.pylint]
+max-args = 5
+
+[tool.taskipy.tasks]
+pre-commit = "pre-commit run --all-files"
+start = """
+    gunicorn \
+        simple_web_uuid:app \
+        --bind 0.0.0.0:8080 \
+        --worker-class gevent \
+        --workers 1 \
+        --worker-connections 1000 \
+        --keep-alive 5 \
+        --timeout 10 \
+        --log-level=info \
+        --access-logfile - \
+        --error-logfile -
+    """
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.group.dev.dependencies]
+mypy = "^1.16.0"
+ruff = "^0.11.12"
+pre-commit = "^4.2.0"
+taskipy = "^1.14.1"
