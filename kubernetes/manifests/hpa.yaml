@@ -12,8 +12,8 @@ metadata:
     app.kubernetes.io/name: simple-web-uuid
     app.kubernetes.io/part-of: web
 spec:
-  minReplicas: 3
-  maxReplicas: 25
+  minReplicas: 5
+  maxReplicas: 5
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
