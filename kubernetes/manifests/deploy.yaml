@@ -12,7 +12,6 @@ metadata:
     app.kubernetes.io/name: simple-web-uuid
     app.kubernetes.io/part-of: web
 spec:
-  replicas: 1
   selector:
     matchLabels:
       app: simple-web-uuid
