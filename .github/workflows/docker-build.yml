@@ -56,5 +56,5 @@ jobs:
           git config user.name "actions-simple-web-uuid"
           git config user.email "actions-simple-web-uuid@github.com"
           git add .
-          git commit -m "Update image simple-web-uuid with tag ${{ github.sha }}"
+          git commit -m "Update image in simple-web-uuid/manifests/deploy.yaml with ghcr.io/${{ github.repository }}:${{ github.sha }}"
           git push
