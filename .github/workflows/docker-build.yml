@@ -45,7 +45,9 @@ jobs:
 
       - name: Update image tag in manifests
         run: |
-          sed -i "s|ghcr.io/${{ github.repository }}:.*|ghcr.io/${{ github.repository }}:${{ github.sha }}|" ./manifests/simple-web-uuid/manifests/deploy.yaml
+          sed -i \
+            "s|ghcr.io/${{ github.repository }}:.*|ghcr.io/${{ github.repository }}:${{ github.sha }}|" \
+            ./manifests/${{ github.repository.split('/')[1] }}/manifests/deploy.yaml
 
       - name: Commit and push changes
         run: |
