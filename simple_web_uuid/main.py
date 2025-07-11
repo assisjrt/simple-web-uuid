@@ -1,4 +1,6 @@
 import platform
+import secrets
+from datetime import datetime, timedelta, timezone
 from typing import Literal
 from uuid import uuid4
 
@@ -7,6 +9,10 @@ from flask import Flask, request
 app = Flask(__name__)
 
 data_store: dict[str, dict[str, str]] = {}
+
+
+def get_random_color() -> str:
+    return secrets.choice(["red", "blue", "yellow", "green", "orange", "purple"])
 
 
 @app.route("/health")
@@ -22,8 +28,8 @@ def hello_world() -> dict[str, str]:
 
 
 @app.route("/items", methods=["GET"])
-def get_items() -> dict[str, list[str]]:
-    return {"items": list(data_store.keys())}
+def get_items() -> dict[str, dict[str, str]]:
+    return data_store
 
 
 @app.route("/items/<item_id>", methods=["GET"])
@@ -39,9 +45,9 @@ def create_item() -> tuple[dict[str, str], Literal[201]]:
     item_id = str(uuid4())
 
     item = {
-        "id": item_id,
         "name": data.get("name", ""),
-        "created_at": platform.node(),
+        "color": get_random_color(),
+        "created_at": datetime.now(timezone(timedelta(hours=-3))).isoformat(),
     }
 
     data_store[item_id] = item
