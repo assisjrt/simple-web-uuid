@@ -63,7 +63,7 @@ def update_item(item_id: str) -> tuple[dict[str, str], Literal[404]] | dict[str,
     item = data_store[item_id]
 
     item["name"] = data.get("name", item["name"])
-    item["updated_at"] = platform.node()
+    item["updated_at"] = datetime.now(timezone(timedelta(hours=-3))).isoformat()
 
     return {"message": "item update success", "item": str(item)}
 
