@@ -13,6 +13,12 @@ on:
         description: "Enter an existing tag(ex: 1.2.3)"
         required: true
         type: string
+
+permissions:
+  actions: write
+  contents: write
+  packages: write
+
 jobs:
   sast:
     runs-on: ubuntu-latest
