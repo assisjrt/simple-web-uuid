@@ -149,7 +149,7 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}:${{ steps.define_tag.outputs.tag_name }}
+            ghcr.io/${{ github.repository }}:${{ needs.check-release.outputs.tag_name }}
             ghcr.io/${{ github.repository }}:latest
 
       - name: Update image name in the manifests repository
@@ -160,5 +160,5 @@ jobs:
           event-type: update-image-simple-web-uuid
           client-payload: |
             {
-              "image_name": "ghcr.io/${{ github.repository }}:${{ steps.define_tag.outputs.tag_name }}"
+              "image_name": "ghcr.io/${{ github.repository }}:${{ needs.check-release.outputs.tag_name }}"
             }
