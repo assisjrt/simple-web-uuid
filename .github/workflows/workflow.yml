@@ -39,7 +39,7 @@ jobs:
       - name: Update image name in the manifests repository
         uses: peter-evans/repository-dispatch@v3
         with:
-          token: ${{ secrets.GIT_TOKEN }}
+          token: ${{ secrets.TOKEN_KUBERNETES_MANIFESTS_PUBLIC }}
           repository: assisjrt/kubernetes-manifests-public
           event-type: update-image-simple-web-uuid
           client-payload: |
