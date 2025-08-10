@@ -44,7 +44,7 @@ jobs:
           event-type: update-image-simple-web-uuid
           client-payload: |
             {
-              "image_name": "${{ github.repository }}:${{ github.sha }}"
+              "image_name": "ghcr.io/${{ github.repository }}:${{ github.sha }}"
             }
 
       # - name: Checkout manifests repository
