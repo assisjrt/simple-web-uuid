@@ -52,8 +52,12 @@ jobs:
     needs:
       - sast
     runs-on: ubuntu-latest
+
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    outputs:
+      tag_name: ${{ steps.define_tag.outputs.tag_name }}
 
     steps:
       - name: Checkout repository
