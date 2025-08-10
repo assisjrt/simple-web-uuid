@@ -1,7 +1,5 @@
 # simple-web-uuid
 
----
-
 ## GET all items
 
 ```bash
