@@ -3,10 +3,120 @@ name: Workflow
 on:
   push:
     branches:
-      - main
-
+      - "**"
+  release:
+    types:
+      - created
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Enter an existing tag(ex: 1.2.3)"
+        required: true
+        type: string
 jobs:
-  build-and-push-image:
+  sast:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      # - name: ruff
+      #   uses: astral-sh/ruff-action@v3
+      #   with:
+      #     src: "./simple_web_uuid"
+      #     args: "check --fix --output-format=sarif --output-file=ruff.sarif"
+
+      # - name: Upload SARIF to GitHub
+      #   uses: github/codeql-action/upload-sarif@v3
+      #   with:
+      #     sarif_file: ruff.sarif
+
+      - name: install-python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: pre-commit
+        uses: cloudposse/github-action-pre-commit@v4.0.0
+        with:
+          extra_args: --all-files
+
+  check-release:
+    if: (github.event_name == 'release' || github.event_name == 'workflow_dispatch') && needs.sast.result == 'success'
+    needs:
+      - sast
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Debug tags
+        run: git tag --list
+
+      - name: Set tag name dynamically
+        id: define_tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "tag_name=${{ inputs.tag_name }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag_name=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Fetch tags and validate if the tag exists
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git fetch --tags
+
+          if ! git rev-parse "refs/tags/${{ steps.define_tag.outputs.tag_name }}" >/dev/null 2>&1; then
+            echo "❌ Tag '${{ steps.define_tag.outputs.tag_name }}' not exist."
+            exit 1
+          fi
+
+          echo "✅ Tag '${{ steps.define_tag.outputs.tag_name }}' not found."
+
+      - name: Check if the tag is on the latest commit of main
+        id: check_main
+        run: |
+          git fetch origin main
+
+          tag_commit=$(git rev-parse refs/tags/${{ steps.define_tag.outputs.tag_name }})
+          main_commit=$(git rev-parse origin/main)
+
+          echo "Tag commit: $tag_commit"
+          echo "Current main commit: $main_commit"
+
+          if [ "$tag_commit" = "$main_commit" ]; then
+            echo "is_main=true" >> $GITHUB_ENV
+            echo "✅ Tag is on the latest commit of main."
+          else
+            echo "is_main=false" >> $GITHUB_ENV
+            echo "🛑 The tag is not on the HEAD of main. Ending release."
+            exit 1
+          fi
+
+      - name: Create release with automatic notes
+        if: env.is_main == 'true'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.define_tag.outputs.tag_name }}
+          generate_release_notes: true
+
+      - name: Output log if tag is not from main
+        if: env.is_main == 'false'
+        run: |
+          echo "❌ No release was created. The specified tag is not on the latest commit of main."
+          exit 1
+
+  build-push-image:
+    if: (github.event_name == 'release' || github.event_name == 'workflow_dispatch') && needs.sast.result == 'success'
+    needs:
+      - check-release
     runs-on: ubuntu-latest
 
     permissions:
@@ -46,26 +156,3 @@ jobs:
             {
               "image_name": "ghcr.io/${{ github.repository }}:${{ github.sha }}"
             }
-
-      # - name: Checkout manifests repository
-      #   uses: actions/checkout@v4
-      #   with:
-      #     repository: assisjrt/kubernetes-manifests-public
-      #     ssh-key: ${{ secrets.DEPLOY_KEY_KUBERNETES_MANIFESTS_PUBLIC }}
-      #     ref: main
-      #     path: manifests
-
-      # - name: Update image tag in manifests
-      #   run: |
-      #     sed -i \
-      #       "s|ghcr.io/${{ github.repository }}:.*|ghcr.io/${{ github.repository }}:${{ github.sha }}|" \
-      #       ./manifests/simple-web-uuid/manifests/deploy.yaml
-
-      # - name: Commit and push changes
-      #   run: |
-      #     cd manifests
-      #     git config user.name "actions-simple-web-uuid"
-      #     git config user.email "actions-simple-web-uuid@github.com"
-      #     git add .
-      #     git commit -m "Update image in simple-web-uuid/manifests/deploy.yaml with ghcr.io/${{ github.repository }}:${{ github.sha }}"
-      #     git push
