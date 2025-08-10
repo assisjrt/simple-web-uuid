@@ -84,7 +84,7 @@ jobs:
             exit 1
           fi
 
-          echo "✅ Tag '${{ steps.define_tag.outputs.tag_name }}' not found."
+          echo "✅ Tag '${{ steps.define_tag.outputs.tag_name }}' found."
 
       - name: Check if the tag is on the latest commit of main
         id: check_main
